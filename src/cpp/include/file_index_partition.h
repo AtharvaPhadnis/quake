@@ -21,7 +21,7 @@ public:
     bool is_dirty = false; // indicate whether the partition is dirty (changes haven't been synced to disk)
     std::mutex ref_mutex;
     int ref_cnt = 0;
-    bool debug_ = true;
+    bool debug_ = false;
 
     /// Default constructor.
     FileIndexPartition() = default;

@@ -38,7 +38,7 @@ def main():
 
     ######### Build the index #########
     build_params = IndexBuildParams()
-    build_params.nlist = 1024
+    build_params.nlist = 100
     build_params.metric = "l2"
     print("Building index with num_clusters=%d over %d vectors of dimension %d..." % (build_params.nlist, vectors.size(0), vectors.size(1)))
     start_time = time.time()
@@ -52,6 +52,7 @@ def main():
     search_params = SearchParams()
     search_params.k = 10
     search_params.nprobe = 10
+    # search_params.num_threads = 1
     # or set a recall target
     # search_params.recall_target = 0.9
 
@@ -65,13 +66,13 @@ def main():
     print(f"Search time: {end_time - start_time:.4f} seconds\n")
 
     ######### Remove vectors from index #########
-    n_remove = 100
-    print("Removing %d vectors from the index..." % n_remove)
-    remove_ids = torch.arange(0, n_remove)
-    start_time = time.time()
-    index.remove(remove_ids)
-    end_time = time.time()
-    print(f"Remove time: {end_time - start_time:.4f} seconds\n")
+    # n_remove = 100
+    # print("Removing %d vectors from the index..." % n_remove)
+    # remove_ids = torch.arange(0, n_remove)
+    # start_time = time.time()
+    # index.remove(remove_ids)
+    # end_time = time.time()
+    # print(f"Remove time: {end_time - start_time:.4f} seconds\n")
 
     ######### Add vectors to index #########
     n_add = 100
@@ -85,14 +86,14 @@ def main():
     print(f"Add time: {end_time - start_time:.4f} seconds\n")
 
     ######### Perform maintenance on the index #########
-    print("Perform maintenance on the index...")
-    start_time = time.time()
-    maintenance_info = index.maintenance()
-    end_time = time.time()
+    # print("Perform maintenance on the index...")
+    # start_time = time.time()
+    # maintenance_info = index.maintenance()
+    # end_time = time.time()
 
-    print(f"Num partitions split: {maintenance_info.n_splits}")
-    print(f"Num partitions merged: {maintenance_info.n_deletes}")
-    print(f"Maintenance time: {end_time - start_time:.4f} seconds\n")
+    # print(f"Num partitions split: {maintenance_info.n_splits}")
+    # print(f"Num partitions merged: {maintenance_info.n_deletes}")
+    # print(f"Maintenance time: {end_time - start_time:.4f} seconds\n")
 
     ######### Save and load the index #########
     # Optionally save the index

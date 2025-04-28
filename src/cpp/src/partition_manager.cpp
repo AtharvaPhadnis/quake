@@ -79,7 +79,7 @@ void PartitionManager::init_partitions(
     for (int64_t i = 0; i < nlist; i++) {
         // Might have to change the function in here to init the correct disk version
         if(curr_level == 0) {
-            std::cout << "[PartitionManager] added empty file partition for " << partition_ids_accessor[i] << std::endl;
+            // std::cout << "[PartitionManager] added empty file partition for " << partition_ids_accessor[i] << std::endl;
             partitions_->add_list_file(partition_ids_accessor[i]);
         }
         else {

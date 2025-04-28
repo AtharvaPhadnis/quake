@@ -23,7 +23,7 @@ FileIndexPartition& FileIndexPartition::operator=(FileIndexPartition&& other) no
 // Destructor
 FileIndexPartition::~FileIndexPartition() {
     // munmap stuff needs to happen here?
-    std::cout << "FIP: Destructor " << codes_file_path_ << std::endl;
+    // std::cout << "FIP: Destructor " << codes_file_path_ << std::endl;
 }
 
 // void FileIndexPartition::ensure_capacity(int64_t required_size) {
@@ -45,12 +45,12 @@ FileIndexPartition::~FileIndexPartition() {
 
 void FileIndexPartition::remap_files(int64_t required) {
     if(debug_) {
-        std::cout << "remap_files() called" << std::endl;
+        // std::cout << "remap_files() called" << std::endl;
     }
 
     if (codes_) {
         if(debug_) {
-            std::cout << "Unmapping codes" << std::endl;
+            // std::cout << "Unmapping codes" << std::endl;
         }
         munmap(codes_, num_vectors_*static_cast<size_t>(code_size_));
         codes_ = nullptr;
@@ -100,7 +100,7 @@ void FileIndexPartition::remap_files(int64_t required) {
 }
 
 void FileIndexPartition::append(int64_t n_entry, const idx_t* new_ids, const uint8_t* new_codes) {
-    std::cout << "FileIndexPartition::append implementation goes here" << std::endl;
+    // std::cout << "FileIndexPartition::append implementation goes here" << std::endl;
 
     // Possible implementation
     /*
@@ -120,7 +120,7 @@ void FileIndexPartition::append(int64_t n_entry, const idx_t* new_ids, const uin
 
     // ensure_capacity(num_vectors_ + n_entry);
 
-    std::cout << "Currently has " << num_vectors_ << " vectors with current_map_size: " << buffer_size_<< std::endl;
+    // std::cout << "Currently has " << num_vectors_ << " vectors with current_map_size: " << buffer_size_<< std::endl;
     // ensure_capacity(num_vectors_ + n_entry);
     // Debatable if this is needed, can we simply expand a mmaped region as needed?
     // If we do end up needing this, need to decide if it allocates memory or not
@@ -256,7 +256,7 @@ void FileIndexPartition::load() {
 // decrement the reference bit, if its zero called the buffer manager to flush the file
 // the buffer manager should loop over the buffer pool and evict all buffers that belongs to the file
 void FileIndexPartition::save() {
-    std::cout << "[FileIndexPartition::save]" << std::endl;
+    //std::cout << "[FileIndexPartition::save]" << std::endl;
     std::lock_guard<std::mutex> lock(ref_mutex);
     ref_cnt --;
     if (ref_cnt == 0) {
@@ -276,7 +276,7 @@ void FileIndexPartition::save() {
         return;
     }
 
-    std::cout << "[FileIndexPartition::save] about to return" << std::endl;
+    // std::cout << "[FileIndexPartition::save] about to return" << std::endl;
 }
 
 void FileIndexPartition::set_codes_file_path(std::string codes_file_path) {
