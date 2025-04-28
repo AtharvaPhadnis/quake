@@ -23,26 +23,131 @@ FileIndexPartition& FileIndexPartition::operator=(FileIndexPartition&& other) no
 // Destructor
 FileIndexPartition::~FileIndexPartition() {
     // munmap stuff needs to happen here?
+    std::cout << "FIP: Destructor " << codes_file_path_ << std::endl;
+}
+
+// void FileIndexPartition::ensure_capacity(int64_t required_size) {
+//     std::cout << "Ensure capacity called with required_size: " <<
+//     required_size << ", current size is " << buffer_size_ << std::endl;
+//     // Now id required_size > current_map_size, some remapping needs to be done
+//     // Also potentially different behavior if mmap pointer = nullptr
+//     if(required_size > buffer_size_) {
+//         // Need to remap for a bigger size
+//         // In memory version simply doubles allocated region size when we
+//         // hit the limit, disk based needs a different heuristic?
+//         if(debug_) {
+//             std::cout << "Required size is larger than current map size, will call remap()" << std::endl;
+//         }
+//         remap_files(required_size);
+//     }
+
+// }
+
+void FileIndexPartition::remap_files(int64_t required) {
+    if(debug_) {
+        std::cout << "remap_files() called" << std::endl;
+    }
+
+    if (codes_) {
+        if(debug_) {
+            std::cout << "Unmapping codes" << std::endl;
+        }
+        munmap(codes_, num_vectors_*static_cast<size_t>(code_size_));
+        codes_ = nullptr;
+    }
+
+    if (ids_) {
+        munmap(ids_, num_vectors_*sizeof(idx_t));
+        ids_ = nullptr;
+    }
+
+    int64_t new_capacity;
+    if (required > buffer_size_) {
+        new_capacity = std::max<int64_t>(1024, buffer_size_);
+        while (new_capacity < required) {
+            new_capacity *= 2;
+        }
+    } else {
+        return;
+    }
+    // This will need to change with the buffer approach, we dont want to close the file descriptors of partitions
+    // in the cache, they might be needed
+    int codes_fd = open(codes_file_path_.c_str(), O_RDWR | O_CREAT, 0644);
+    
+    if (ftruncate(codes_fd, new_capacity*static_cast<size_t>(code_size_)) == -1) 
+        throw std::runtime_error("Codes file resize failed");
+    
+    uint8_t* new_codes_ = (uint8_t*)mmap(nullptr, new_capacity*static_cast<size_t>(code_size_), PROT_READ | PROT_WRITE, MAP_SHARED, codes_fd, 0);
+    if (new_codes_ == MAP_FAILED) 
+        throw std::runtime_error("Codes remap failed");
+
+    close(codes_fd);
+
+    int ids_fd = open(ids_file_path_.c_str(), O_RDWR | O_CREAT, 0644);
+    
+    if (ftruncate(ids_fd, new_capacity*sizeof(idx_t)) == -1) 
+        throw std::runtime_error("Ids file resize failed");
+
+    idx_t* new_ids_ = (idx_t*)mmap(nullptr, new_capacity*sizeof(idx_t), PROT_READ | PROT_WRITE, MAP_SHARED, ids_fd, 0);
+    if (new_ids_ == MAP_FAILED) 
+        throw std::runtime_error("Ids remap failed");
+
+    close(ids_fd);
+
+    codes_ = new_codes_;
+    ids_ = new_ids_;
+    buffer_size_ = new_capacity;
 }
 
 void FileIndexPartition::append(int64_t n_entry, const idx_t* new_ids, const uint8_t* new_codes) {
-    std::cout << "Appending to FileIndexPartition file (" << file_path_ << ") goes here" << std::endl;
-    if (n_entry <= 0) return;
+    std::cout << "FileIndexPartition::append implementation goes here" << std::endl;
 
-    std::ofstream ofs(file_path_, std::ios::binary | std::ios::app); // append mode
-    if (!ofs) {
-        throw std::runtime_error("Failed to open file for appending: " + file_path_);
-    }
+    // Possible implementation
+    /*
+        - If filename is null, call something like do_mmap()
+        - do_mmap() should
+            1. Create a file in the file system
+            2. Mmap that file into memory and return a pointer to it? (Maybe we can have a member variable
+            in FileIndexPartition hold the pointer as well)
 
+        - Else, ensure there is enough capacity in the already mmap region to store the new vectors
+        ensure_capacity() maybe
+        - Cast codes to bytes
+        - Write into mmap region
+    */
+
+    if(n_entry <= 0) return;
+
+    // ensure_capacity(num_vectors_ + n_entry);
+
+    std::cout << "Currently has " << num_vectors_ << " vectors with current_map_size: " << buffer_size_<< std::endl;
+    // ensure_capacity(num_vectors_ + n_entry);
+    // Debatable if this is needed, can we simply expand a mmaped region as needed?
+    // If we do end up needing this, need to decide if it allocates memory or not
+    // If it does, the mmap logic below might not be needed
+
+    // int codes_fd = open(codes_file_path_.c_str(), O_RDWR | O_CREAT, 0644);
+    // if (codes_fd == -1) throw std::runtime_error("Failed to open file");
+
+    // int ids_fd = open(ids_file_path_.c_str(), O_RDWR | O_CREAT, 0644);
+    // if (ids_fd == -1) throw std::runtime_error("Failed to open file");
+
+    remap_files(num_vectors_ + n_entry);
     const size_t code_bytes = static_cast<size_t>(code_size_);
-    for (int64_t i = 0; i < n_entry; ++i) {
-        ofs.write(reinterpret_cast<const char*>(new_codes + i * code_bytes), code_bytes);
-        ofs.write(reinterpret_cast<const char*>(&new_ids[i]), sizeof(idx_t));
-    }
+
+    std::memcpy(codes_ + num_vectors_ * code_bytes, new_codes, n_entry * code_bytes);
+    std::memcpy(ids_ + num_vectors_, new_ids, n_entry * sizeof(idx_t));
     num_vectors_ += n_entry;
 
-    ofs.close();
-}
+
+    // With a buffer, we dont want to immediately unmap, we want to keep this around till all appends into this 
+    // partition are done
+    munmap(codes_, buffer_size_);
+    munmap(ids_, buffer_size_);
+    buffer_size_ = 0;
+    codes_ = nullptr;
+    ids_ = nullptr;
+} 
 
 void FileIndexPartition::update(int64_t offset, int64_t n_entry, const idx_t* new_ids, const uint8_t* new_codes) {
     // Implementation here
@@ -115,56 +220,71 @@ void FileIndexPartition::reallocate(int64_t new_capacity) {
 // for testing
 void FileIndexPartition::load() {
     // std::cout << "[FileIndexPartition] load" << std::endl;
-    std::ifstream in(file_path_, std::ios::binary);
-    if (!in) {
-        throw std::runtime_error("Unable to open file for reading: " + file_path_);
-    }
-
+    // std::ifstream in(file_path_, std::ios::binary);
+    // if (!in) {
+    //     throw std::runtime_error("Unable to open file for reading: " + file_path_);
+    // }
     std::lock_guard<std::mutex> lock(ref_mutex);
     
     ref_cnt ++;
     if (is_in_memory) return;
 
-    ensure_capacity(num_vectors_); // allocate memory for codes_ and ids_
+    int codes_fd = open(codes_file_path_.c_str(), O_RDWR, 0644);
+    if (codes_fd == -1) throw std::runtime_error("Failed to open file");
 
-    for (int64_t i = 0; i < num_vectors_; ++i) {
-        in.read(reinterpret_cast<char*>(codes_ + i * code_size_), code_size_);
-        in.read(reinterpret_cast<char*>(ids_ + i), sizeof(idx_t));
-    }
+    int ids_fd = open(ids_file_path_.c_str(), O_RDWR, 0644);
+    if (ids_fd == -1) throw std::runtime_error("Failed to open file");
 
-    in.close();
+    // in.close();
     is_in_memory = true;
+    // mmap the file into memory
+    int64_t file_size = num_vectors_ * static_cast<size_t>(code_size_);
+
+    codes_ = (uint8_t*)mmap(nullptr, file_size, PROT_READ | PROT_WRITE, MAP_SHARED, codes_fd, 0);
+    if (codes_ == MAP_FAILED) 
+        throw std::runtime_error("Failed to mmap file");
+
+    
+    ids_ = (idx_t*)mmap(nullptr, num_vectors_*sizeof(idx_t), PROT_READ | PROT_WRITE, MAP_SHARED, ids_fd, 0);
+    if (ids_ == MAP_FAILED) 
+        throw std::runtime_error("Ids remap failed");
+
+    close(codes_fd);
+    close(ids_fd);
 }
 
 // decrement the reference bit, if its zero called the buffer manager to flush the file
 // the buffer manager should loop over the buffer pool and evict all buffers that belongs to the file
 void FileIndexPartition::save() {
+    std::cout << "[FileIndexPartition::save]" << std::endl;
     std::lock_guard<std::mutex> lock(ref_mutex);
     ref_cnt --;
     if (ref_cnt == 0) {
         buffer_size_ = 0;
-        free_memory(); // for now, we don't have a dedicated buffer pool so just free the memory
+        //free_memory(); // for now, we don't have a dedicated buffer pool so just free the memory
         is_in_memory = false;
+
+        if(is_dirty) {
+            munmap(codes_, num_vectors_*static_cast<size_t>(code_size_));
+            munmap(ids_, num_vectors_*sizeof(idx_t));
+            codes_ = nullptr;
+            ids_ = nullptr;
+        }
+    }
+    else {
+        // Someone else is still pointing to this partition
+        return;
     }
 
-    if (is_dirty) {
-        std::ofstream out(file_path_, std::ios::binary); // if num_vectors_ is maintained correctly, no need to clear all vectors before writing back
-        if (!out) {
-            throw std::runtime_error("Unable to open file for writing");
-        }
-    
-        const size_t code_bytes = static_cast<size_t>(code_size_);
-        for (int64_t i = 0; i < num_vectors_; ++i) {
-            out.write(reinterpret_cast<const char*>(codes_ + i * code_bytes), code_bytes);
-            out.write(reinterpret_cast<const char*>(&ids_[i]), sizeof(idx_t));
-        }
-
-        out.close();
-    }
+    std::cout << "[FileIndexPartition::save] about to return" << std::endl;
 }
 
-void FileIndexPartition::set_file_path(std::string file_path) {
-    file_path_ = file_path;
+void FileIndexPartition::set_codes_file_path(std::string codes_file_path) {
+    codes_file_path_ = codes_file_path;
+}
+
+void FileIndexPartition::set_ids_file_path(std::string ids_file_path) {
+    ids_file_path_ = ids_file_path;
 }
 
 // void FileIndexPartition::free_memory() {

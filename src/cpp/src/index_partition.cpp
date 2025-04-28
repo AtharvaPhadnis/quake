@@ -36,6 +36,7 @@ IndexPartition& IndexPartition::operator=(IndexPartition&& other) noexcept {
 }
 
 IndexPartition::~IndexPartition() {
+    std::cout << "IP: Destructor" << std::endl;
     clear();
 }
 
@@ -188,7 +189,7 @@ void IndexPartition::free_memory() {
         numa_free(ids_, buffer_size_ * sizeof(idx_t));
     }
 #else
-    // std::cout << "About to free codes_ and ids_ (parent class)" << std::endl;
+    std::cout << "About to free codes_ and ids_ (parent class)" << std::endl;
     std::free(codes_);
     std::free(ids_);
 #endif
@@ -220,6 +221,7 @@ void IndexPartition::reallocate_memory(int64_t new_capacity) {
 }
 
 void IndexPartition::ensure_capacity(int64_t required) {
+    std::cout << "Ensure capacity in IndexPartition, FileIndexPartition SHOULD NOT end up here" << std::endl;
     if (required > buffer_size_) {
         int64_t new_capacity = std::max<int64_t>(1024, buffer_size_);
         while (new_capacity < required) {

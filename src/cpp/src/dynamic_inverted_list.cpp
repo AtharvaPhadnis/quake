@@ -302,14 +302,27 @@ namespace faiss {
 
         // create an empty file
         std::ostringstream oss;
-        oss << "data/quake_vectors/p_" << list_no << ".qvecs";
-        std::string filename = oss.str();
-        ip->set_file_path(filename);
-        std::ofstream ofs(filename, std::ios::binary);
-        if (!ofs) {
-            throw std::runtime_error("Failed to create file: " + filename);
+        oss << "data/quake_vectors/p_" << list_no << ".qcodes";
+        std::string codes_filename = oss.str();
+        ip->set_codes_file_path(codes_filename);
+        std::ofstream ofs_codes(codes_filename, std::ios::binary);
+        if (!ofs_codes) {
+            throw std::runtime_error("Failed to create file: " + codes_filename);
         }
-        ofs.close();
+        ofs_codes.close();
+        
+        oss.str("");
+        oss.clear();
+
+        oss << "data/quake_vectors/p_" << list_no << ".qids";
+        std::string ids_filename = oss.str();
+        ip->set_ids_file_path(ids_filename);
+
+        std::ofstream ofs_ids(ids_filename, std::ios::binary);
+        if (!ofs_ids) {
+            throw std::runtime_error("Failed to create file: " + ids_filename);
+        }
+        ofs_ids.close();
 
         nlist++;
     } 

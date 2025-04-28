@@ -3,16 +3,25 @@
 
 #include <index_partition.h>
 #include <string>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
+
 
 
 class FileIndexPartition : public IndexPartition {
 public:
-    std::string file_path_;
+    std::string codes_file_path_;
+    std::string ids_file_path_;
     int fd_ = -1; // file descriptor
+    // int codes_fd = -1; // file descriptor
+    // int ids_fd = -1; // file descriptor
     bool is_in_memory = false; // indicate whether the partition is in memory
     bool is_dirty = false; // indicate whether the partition is dirty (changes haven't been synced to disk)
     std::mutex ref_mutex;
     int ref_cnt = 0;
+    bool debug_ = true;
 
     /// Default constructor.
     FileIndexPartition() = default;
@@ -54,7 +63,10 @@ public:
     /// Destructor. Frees all allocated memory.
     ~FileIndexPartition();
 
-    void append(int64_t n_entry, const idx_t* new_ids, const uint8_t* new_codes);
+    void remap_files(int64_t new_size);
+    void ensure_capacity(int64_t required_size);
+
+    void append(int64_t n_entry, const idx_t *new_ids, const uint8_t *new_codes);
     void update(int64_t offset, int64_t n_entry, const idx_t* new_ids, const uint8_t* new_codes);
     void remove(int64_t index);
     void resize(int64_t new_capacity);
@@ -67,7 +79,8 @@ public:
     // disk specific method
     void load(); // load the partition to memory from disk
     void save(); // store the vectors on disk
-    void set_file_path(std::string file_path);
+    void set_codes_file_path(std::string codes_file_path);
+    void set_ids_file_path(std::string ids_file_path);
 
 
     
