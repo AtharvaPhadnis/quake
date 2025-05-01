@@ -1,1 +1,8 @@
 __pycache__
+
+data/
+build/
+quake.egg-info/
+
+settings.json
+latency_profile.csv
