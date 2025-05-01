@@ -82,6 +82,7 @@ shared_ptr<BuildTimingInfo> QuakeIndex::build(Tensor x, Tensor ids, shared_ptr<I
 
     // create query coordinator
     query_coordinator_ = make_shared<QueryCoordinator>(parent_, partition_manager_, maintenance_policy_, metric_, build_params_->num_workers);
+    // query_coordinator_->buffer->size = build_params->buffer_size;
 
     auto end = std::chrono::high_resolution_clock::now();
     timing_info->total_time_us = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
@@ -94,6 +95,9 @@ QuakeIndex::search(Tensor x, shared_ptr<SearchParams> search_params) {
     if (!query_coordinator_) {
         throw std::runtime_error("[QuakeIndex::search()] No query coordinator. Did you build the index?");
     }
+    // if(search_params->buffer_size != query_coordinator_->buffer->buffer_size) {
+    //     query_coordinator_->buffer.resize(search_params->buffer_size);
+    // }
     return query_coordinator_->search(x, search_params);
 }
 
@@ -101,7 +105,6 @@ Tensor QuakeIndex::get_ids() {
     if (!partition_manager_) {
         throw std::runtime_error("[QuakeIndex::get_ids()] No partition manager. Index not built?");
     }
-
     return partition_manager_->get_ids();
 }
 

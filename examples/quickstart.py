@@ -52,6 +52,7 @@ def main():
     search_params = SearchParams()
     search_params.k = 10
     search_params.nprobe = 10
+    # search_params.buffer_size = 10 / 1000MB
     # search_params.num_threads = 1
     # or set a recall target
     # search_params.recall_target = 0.9

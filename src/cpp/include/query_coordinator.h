@@ -30,6 +30,7 @@ public:
     shared_ptr<PartitionManager> partition_manager_;
     shared_ptr<MaintenancePolicy> maintenance_policy_;
     shared_ptr<QuakeIndex> parent_;
+    shared_ptr<BufferManager> buffer;
     MetricType metric_;
 
     vector<std::thread> worker_threads_;

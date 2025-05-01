@@ -168,8 +168,15 @@ namespace faiss {
             part->set_code_size(static_cast<int64_t>(code_size));
         }
 
-        if (auto file_part = std::dynamic_pointer_cast<FileIndexPartition>(part)) {
-            file_part->append((int64_t) n_entry, ids, codes);
+        if (auto fip = std::dynamic_pointer_cast<FileIndexPartition>(part)) {
+            if(fip->is_in_memory) {
+                std::cout << "TBD! For now we just write back if dirty" << std::endl;
+                // Potential Implementation:
+                // if(fip->is_dirty) {
+                //     fip->save();
+                // }
+            } 
+            fip->append((int64_t) n_entry, ids, codes);
         } else {
             part->append((int64_t) n_entry, ids, codes);
         }
