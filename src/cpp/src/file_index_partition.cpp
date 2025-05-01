@@ -24,6 +24,10 @@ FileIndexPartition& FileIndexPartition::operator=(FileIndexPartition&& other) no
 FileIndexPartition::~FileIndexPartition() {
     // munmap stuff needs to happen here?
     // std::cout << "FIP: Destructor " << codes_file_path_ << std::endl;
+    munmap(codes_, buffer_size_*static_cast<size_t>(code_size_));
+    munmap(ids_, buffer_size_*sizeof(idx_t));
+    codes_ = nullptr;
+    ids_ = nullptr;
 }
 
 // void FileIndexPartition::ensure_capacity(int64_t required_size) {
@@ -52,12 +56,12 @@ void FileIndexPartition::remap_files(int64_t required) {
         if(debug_) {
             // std::cout << "Unmapping codes" << std::endl;
         }
-        munmap(codes_, num_vectors_*static_cast<size_t>(code_size_));
+        munmap(codes_, buffer_size_*static_cast<size_t>(code_size_));
         codes_ = nullptr;
     }
 
     if (ids_) {
-        munmap(ids_, num_vectors_*sizeof(idx_t));
+        munmap(ids_, buffer_size_*sizeof(idx_t));
         ids_ = nullptr;
     }
 
@@ -265,8 +269,8 @@ void FileIndexPartition::save() {
         is_in_memory = false;
 
         if(is_dirty) {
-            munmap(codes_, num_vectors_*static_cast<size_t>(code_size_));
-            munmap(ids_, num_vectors_*sizeof(idx_t));
+            munmap(codes_, buffer_size_*static_cast<size_t>(code_size_));
+            munmap(ids_, buffer_size_*sizeof(idx_t));
             codes_ = nullptr;
             ids_ = nullptr;
         }
