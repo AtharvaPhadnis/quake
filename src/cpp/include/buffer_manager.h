@@ -3,6 +3,7 @@
 
 #include <unordered_set>
 #include <queue>
+#include <partition_manager.h>
 #include <file_index_partition.h>
 #include <policy.h>
 
@@ -23,7 +24,13 @@ class BufferManager {
         shared_ptr<Policy> policy;
         int bufSize; // number of partitions in the memory
         int curSize;
-        void put(int pid, shared_ptr<FileIndexPartition> fip); // load the vectors and ids of a partition from disk
+        bool debug_ = true;
+        
+
+        BufferManager();
+        ~BufferManager();
+
+        void put(int pid, shared_ptr<FileIndexPartition> fip, shared_ptr<PartitionManager> partition_manager_); // load the vectors and ids of a partition from disk
         void flush(int pid, shared_ptr<FileIndexPartition> fip); // flush the vectors and ids of a partition to disk, while still keeping in memory
         
     private:

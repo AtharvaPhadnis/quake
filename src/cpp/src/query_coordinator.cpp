@@ -23,11 +23,11 @@ QueryCoordinator::QueryCoordinator(shared_ptr<QuakeIndex> parent,
       maintenance_policy_(maintenance_policy),
       metric_(metric),
       num_workers_(num_workers),
-      stop_workers_(false),
-      buffer() {
+      stop_workers_(false) {
     if (num_workers_ > 0) {
         initialize_workers(num_workers_);
     }
+    buffer = make_shared<BufferManager>();
 }
 
 // Destructor
@@ -562,7 +562,7 @@ shared_ptr<SearchResult> QueryCoordinator::serial_scan(Tensor x, Tensor partitio
                 if(fip) {
                     // std::cout << "[QueryCoordinator] serial_scan: Loading level " << partition_manager_->parent_->current_level_ - 1 << " partition ID: " << pi << std::endl;
                     // dip->load();
-                    buffer->put(pi, fip);
+                    buffer->put(pi, fip, partition_manager_);
                 }
             }
 

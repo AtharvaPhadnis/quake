@@ -36,7 +36,7 @@ IndexPartition& IndexPartition::operator=(IndexPartition&& other) noexcept {
 }
 
 IndexPartition::~IndexPartition() {
-    std::cout << "IP: Destructor" << std::endl;
+    // std::cout << "IP: Destructor" << std::endl;
     clear();
 }
 
