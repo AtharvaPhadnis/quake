@@ -1,10 +1,17 @@
-#include <buffer_manager.h>
+#ifndef FIFO_POLICY_H
+#define FIFO_POLICY_H
 
-class FIFO::Policy {
+#include <policy.h>
+#include <queue>
+
+class FIFOPolicy : public Policy {
     public:
-        std::queue<int> q; // who to evict
-        std::vector findVictims();
+        std::queue<int> fifo_q; // who to evict
+        std::vector<int> findVictims();
         void insert(int pid);
+        ~FIFOPolicy();
     private:
         void remove(int pid); // called by findVictim
-}
+};
+
+#endif

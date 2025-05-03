@@ -11,6 +11,7 @@
 #include <list_scanning.h>
 #include <maintenance_policies.h>
 #include <blockingconcurrentqueue.h>
+#include <buffer_manager.h>
 
 class QuakeIndex;
 class PartitionManager;
