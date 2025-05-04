@@ -752,6 +752,7 @@ shared_ptr<SearchResult> QueryCoordinator::batched_serial_scan(
             int64_t pid = part_ids_accessor[q][p];
             if (pid < 0) continue;
             queries_by_partition[pid].push_back(q);
+            std::cout << "Added query: : " << q << " to pid : " << pid << std::endl;
         }
     }
 

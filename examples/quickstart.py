@@ -32,13 +32,13 @@ def main():
 
     # Use a subset of the queries for this example
     ids = torch.arange(vectors.size(0))
-    nq = 100
+    nq = 1
     queries = queries[:nq]
     gt = gt[:nq]
 
     ######### Build the index #########
     build_params = IndexBuildParams()
-    build_params.nlist = 100
+    build_params.nlist = 1024
     build_params.metric = "l2"
     print("Building index with num_clusters=%d over %d vectors of dimension %d..." % (build_params.nlist, vectors.size(0), vectors.size(1)))
     start_time = time.time()
@@ -52,7 +52,7 @@ def main():
     search_params = SearchParams()
     search_params.k = 10
     search_params.nprobe = 10
-    # search_params.buffer_size = 10 / 1000MB
+    search_params.buffer_size = 5 
     # search_params.num_threads = 1
     # or set a recall target
     # search_params.recall_target = 0.9
@@ -76,15 +76,15 @@ def main():
     # print(f"Remove time: {end_time - start_time:.4f} seconds\n")
 
     ######### Add vectors to index #########
-    n_add = 100
-    print("Adding %d vectors to the index..." % n_add)
-    add_ids = torch.arange(vectors.size(0), vectors.size(0) + n_add)
-    add_vectors = torch.randn(n_add, vectors.size(1))
+    # n_add = 100
+    # print("Adding %d vectors to the index..." % n_add)
+    # add_ids = torch.arange(vectors.size(0), vectors.size(0) + n_add)
+    # add_vectors = torch.randn(n_add, vectors.size(1))
 
-    start_time = time.time()
-    index.add(add_vectors, add_ids)
-    end_time = time.time()
-    print(f"Add time: {end_time - start_time:.4f} seconds\n")
+    # start_time = time.time()
+    # index.add(add_vectors, add_ids)
+    # end_time = time.time()
+    # print(f"Add time: {end_time - start_time:.4f} seconds\n")
 
     ######### Perform maintenance on the index #########
     # print("Perform maintenance on the index...")

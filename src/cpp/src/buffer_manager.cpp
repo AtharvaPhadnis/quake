@@ -7,7 +7,7 @@
 
 BufferManager::BufferManager() {
     std::cout << "Constructing buffer manager" << std::endl;
-    bufSize = 3;
+    bufSize = 1;
     policy = make_shared<FIFOPolicy>();
     curSize = 0;
 }
